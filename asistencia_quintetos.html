@@ -458,67 +458,80 @@
     </div>
 
     <script>
-        // --- Variables y Constantes Globales (replicadas para ambas páginas) ---
-        const teamNameInput = document.getElementById('teamNameInput'); // No se usa directamente aquí, pero se carga
-        const coachNameInput = document.getElementById('coachNameInput'); // No se usa directamente aquí, pero se carga
-        const mainTitle = document.getElementById('mainTitle'); 
-
+        // --- Variables y Constantes Globales ---
+        const mainTitle = document.getElementById('mainTitle');
         const availablePlayersCheckboxes = document.getElementById('availablePlayersCheckboxes');
         const generateQuintetsBtn = document.getElementById('generateQuintetsBtn');
         const quintetsDisplay = document.getElementById('quintetsDisplay');
-        const messageArea = document.getElementById('messageArea'); 
+        const messageArea = document.getElementById('messageArea');
         const availablePlayerCountSpan = document.getElementById('availablePlayerCount');
-        const selectAllPlayersBtn = document.getElementById('selectAllPlayersBtn'); 
+        const selectAllPlayersBtn = document.getElementById('selectAllPlayersBtn');
         const saveDistributionBtn = document.getElementById('saveDistributionBtn');
-        const summarySection = document.getElementById('summarySection'); 
-        const summaryList = document.getElementById('summaryList'); 
-        const saveManualChangesBtn = document.getElementById('saveManualChangesBtn'); 
+        const summarySection = document.getElementById('summarySection');
+        const summaryList = document.getElementById('summaryList');
+        const saveManualChangesBtn = document.getElementById('saveManualChangesBtn');
 
         const viewSkillAnalysisBtn = document.getElementById('viewSkillAnalysisBtn');
         const skillAnalysisSection = document.getElementById('skillAnalysisSection');
         const hideSkillAnalysisBtn = document.getElementById('hideSkillAnalysisBtn');
 
-        let allPlayers = []; 
-        let currentQuintets = []; 
-        let playersAvailableForCurrentGame = []; 
+        let allPlayers = [];
+        let currentQuintets = [];
+        let playersAvailableForCurrentGame = [];
 
-        // Reglas FBM y límites (replicadas para ambas páginas)
-        const MIN_PLAYERS_ROSTER_FBM = 9; 
-        const MIN_PLAYERS_PER_GAME = 9; 
-        const MAX_PLAYERS_PER_GAME = 12; 
-        const MIN_PLAY_SEXTOS = 2; 
-        const MAX_PLAY_SEXTOS_PER_PLAYER = 3; 
-        const PLAYERS_PER_SEXTO = 5; 
-        const TOTAL_SEXTO_SLOTS = 6 * PLAYERS_PER_SEXTO; 
+        // Reglas FBM y límites
+        const MIN_PLAYERS_ROSTER_FBM = 9;
+        const MIN_PLAYERS_PER_GAME = 9;
+        const MAX_PLAYERS_PER_GAME = 12;
+        const MIN_PLAY_SEXTOS = 2;
+        const MAX_PLAY_SEXTOS_PER_PLAYER = 3;
+        const PLAYERS_PER_SEXTO = 5;
+        const TOTAL_SEXTO_SLOTS = 6 * PLAYERS_PER_SEXTO;
 
         // --- Funciones Comunes e Inicialización ---
-        document.addEventListener('DOMContentLoaded', () => {
-            loadAllData();
-            renderAvailablePlayersCheckboxes(); // Renderiza los checkboxes basados en el roster cargado
-            updateAvailablePlayerCount(); 
+        document.addEventListener('DOMContentLoaded', async () => {
+            await loadAllData();
+            renderAvailablePlayersCheckboxes();
+            updateAvailablePlayerCount();
         });
 
-        function loadAllData() {
+        // MODIFICADO: Ahora es una función asíncrona para usar fetch
+        async function loadAllData() {
             try {
                 const savedPlayers = localStorage.getItem('players');
-                if (savedPlayers) {
+
+                // Si hay jugadores en localStorage, los usamos.
+                if (savedPlayers && JSON.parse(savedPlayers).length > 0) {
+                    console.log("Cargando jugadores desde localStorage.");
                     allPlayers = JSON.parse(savedPlayers);
-                    allPlayers.forEach(player => {
-                        if (!player.skills) { 
-                            player.skills = { bote: 3, lectura: 3, pase: 3, defensaInd: 3, tacticaDef: 3 };
-                        }
-                    });
                 } else {
-                    allPlayers = []; 
-                    showMessage('No hay jugadores cargados. Por favor, ve a "Roster y Habilidades" para añadir jugadores.', 'warning');
+                    // Si no, los cargamos desde el fichero players.json
+                    console.log("localStorage vacío. Cargando jugadores desde players.json...");
+                    const response = await fetch('players.json');
+                    if (!response.ok) {
+                        throw new Error(`Error al cargar players.json: ${response.statusText}`);
+                    }
+                    const playersFromFile = await response.json();
+                    allPlayers = playersFromFile;
+                    // Y los guardamos en localStorage para la próxima vez
+                    localStorage.setItem('players', JSON.stringify(allPlayers));
+                    console.log("Jugadores cargados desde el fichero y guardados en localStorage.");
                 }
+
+                // Aseguramos que todos los jugadores tengan el objeto de habilidades
+                allPlayers.forEach(player => {
+                    if (!player.skills) {
+                        player.skills = { bote: 3, lectura: 3, pase: 3, defensaInd: 3, tacticaDef: 3 };
+                    }
+                });
             } catch (e) {
-                console.error("Error al cargar datos del localStorage:", e);
+                console.error("Error crítico al cargar datos:", e);
+                showMessage('Error al cargar datos del equipo. El almacenamiento podría haber sido limpiado. Por favor, revisa la consola para más detalles.', 'error');
                 localStorage.clear();
                 allPlayers = [];
-                showMessage('Error al cargar datos del equipo. El almacenamiento ha sido limpiado. Por favor, ve a "Roster y Habilidades" para añadir jugadores.', 'error');
             }
         }
+
 
         // --- Gestión de Quintetos y Algoritmo ---
         function renderAvailablePlayersCheckboxes() {
@@ -529,7 +542,7 @@
                 return;
             }
 
-            allPlayers.forEach(player => {
+            allPlayers.sort((a,b) => a.dorsal - b.dorsal).forEach(player => {
                 const label = document.createElement('label');
                 label.innerHTML = `
                     <input type="checkbox" value="${player.dorsal}" data-id="${player.dorsal}" checked>
@@ -537,7 +550,7 @@
                 `;
                 availablePlayersCheckboxes.appendChild(label);
             });
-            updateAvailablePlayerCount(); 
+            updateAvailablePlayerCount();
         }
 
         availablePlayersCheckboxes.addEventListener('change', updateAvailablePlayerCount);
@@ -555,7 +568,7 @@
         function updateAvailablePlayerCount() {
             const selectedCheckboxes = document.querySelectorAll('#availablePlayersCheckboxes input[type="checkbox"]:checked');
             availablePlayerCountSpan.textContent = selectedCheckboxes.length;
-            
+
             if (selectedCheckboxes.length < MIN_PLAYERS_PER_GAME) {
                 showMessage(`Debes seleccionar al menos ${MIN_PLAYERS_PER_GAME} jugadores disponibles.`, 'error');
                 generateQuintetsBtn.disabled = true;
@@ -571,8 +584,8 @@
 
         generateQuintetsBtn.addEventListener('click', () => {
             const selectedPlayerDorsals = Array.from(document.querySelectorAll('#availablePlayersCheckboxes input[type="checkbox"]:checked'))
-                                            .map(checkbox => parseInt(checkbox.dataset.id));
-            
+                .map(checkbox => parseInt(checkbox.dataset.id));
+
             playersAvailableForCurrentGame = allPlayers.filter(player => selectedPlayerDorsals.includes(player.dorsal));
 
             if (playersAvailableForCurrentGame.length < MIN_PLAYERS_PER_GAME || playersAvailableForCurrentGame.length > MAX_PLAYERS_PER_GAME) {
@@ -581,23 +594,23 @@
             }
 
             try {
-                currentQuintets = generateQuintetsAlgorithm(playersAvailableForCurrentGame); 
-                displayQuintets(currentQuintets, playersAvailableForCurrentGame); 
-                displaySummary(playersAvailableForCurrentGame, currentQuintets); 
-                
+                currentQuintets = generateQuintetsAlgorithm(playersAvailableForCurrentGame);
+                displayQuintets(currentQuintets, playersAvailableForCurrentGame);
+                displaySummary(playersAvailableForCurrentGame, currentQuintets);
+
                 if (!messageArea.classList.contains('warning-message')) {
                     showMessage('¡Quintetos generados con éxito!', 'info');
                 }
-                saveDistributionBtn.style.display = 'block'; 
-                summarySection.style.display = 'block'; 
-                saveManualChangesBtn.style.display = 'none'; 
+                saveDistributionBtn.style.display = 'block';
+                summarySection.style.display = 'block';
+                saveManualChangesBtn.style.display = 'none';
                 skillAnalysisSection.style.display = 'none'; // Ocultar análisis al generar nuevos quintetos
 
             }
             catch (error) {
                 showMessage(`Error al generar quintetos: ${error.message}`, 'error');
                 clearQuintetsDisplay();
-                summarySection.style.display = 'none'; 
+                summarySection.style.display = 'none';
                 saveDistributionBtn.style.display = 'none';
                 saveManualChangesBtn.style.display = 'none';
                 skillAnalysisSection.style.display = 'none'; // Ocultar análisis si hay error
@@ -606,24 +619,24 @@
 
         // --- Algoritmo de Distribución de Quintetos (Versión Final y Más Resiliente para 1 Partido) ---
         function generateQuintetsAlgorithm(players) {
-            clearQuintetsDisplay(); 
+            clearQuintetsDisplay();
             hideMessage();
 
-            let sextos = Array(6).fill(null).map(() => []); 
-            let playerPlayCounts = {}; 
-            let playerSextoHistory = {}; 
+            let sextos = Array(6).fill(null).map(() => []);
+            let playerPlayCounts = {};
+            let playerSextoHistory = {};
 
             players.forEach(p => {
                 playerPlayCounts[p.dorsal] = 0;
-                playerSextoHistory[p.dorsal] = []; 
+                playerSextoHistory[p.dorsal] = [];
             });
 
             let warningMessage = '';
-            
+
             function willPlayThreeConsecutive(dorsal, currentSextoIndex) {
                 const history = playerSextoHistory[dorsal];
-                if (history.length < 2) return false; 
-                
+                if (history.length < 2) return false;
+
                 const lastPlayedIndex = history[history.length - 1];
                 const secondLastPlayedIndex = history[history.length - 2];
 
@@ -632,7 +645,7 @@
 
             for (let s = 0; s < 6; s++) {
                 let currentSextoPlayersDorsals = [];
-                let candidatesPool = [...players]; 
+                let candidatesPool = [...players];
 
                 for (let i = 0; i < PLAYERS_PER_SEXTO; i++) {
                     let validCandidates = candidatesPool.filter(p => {
@@ -647,16 +660,16 @@
                         const countA = playerPlayCounts[a.dorsal];
                         const countB = playerPlayCounts[b.dorsal];
 
-                        if (countA !== countB) return countA - countB; 
-                        
+                        if (countA !== countB) return countA - countB;
+
                         const aPlayedPrev = playerSextoHistory[a.dorsal].includes(s - 1);
                         const bPlayedPrev = playerSextoHistory[b.dorsal].includes(s - 1);
                         if (aPlayedPrev && !bPlayedPrev) return 1;
                         if (!aPlayedPrev && bPlayedPrev) return -1;
 
-                        return Math.random() - 0.5; 
+                        return Math.random() - 0.5;
                     });
-                    
+
                     let playerAssigned = false;
                     if (validCandidates.length > 0) {
                         const player = validCandidates[0];
@@ -664,18 +677,18 @@
 
                         currentSextoPlayersDorsals.push(dorsal);
                         playerPlayCounts[dorsal]++;
-                        playerSextoHistory[dorsal].push(s); 
+                        playerSextoHistory[dorsal].push(s);
                         playerAssigned = true;
-                        
+
                         candidatesPool = candidatesPool.filter(p => p.dorsal !== dorsal);
                     }
-                    
+
                     if (!playerAssigned && currentSextoPlayersDorsals.length < PLAYERS_PER_SEXTO) {
-                        let fallbackCandidates = players.filter(p => 
+                        let fallbackCandidates = players.filter(p =>
                             !currentSextoPlayersDorsals.includes(p.dorsal) &&
                             !willPlayThreeConsecutive(p.dorsal, s)
                         );
-                        
+
                         fallbackCandidates.sort((a, b) => {
                             const countA = playerPlayCounts[a.dorsal];
                             const countB = playerPlayCounts[b.dorsal];
@@ -689,13 +702,13 @@
 
                             currentSextoPlayersDorsals.push(dorsal);
                             playerPlayCounts[dorsal]++;
-                            playerSextoHistory[dorsal].push(s); 
-                            
+                            playerSextoHistory[dorsal].push(s);
+
                             if (playerPlayCounts[dorsal] > MAX_PLAY_SEXTOS_PER_PLAYER) {
                                 const playerNameAndDorsal = `${player.name} (#${player.dorsal})`;
                                 if (!warningMessage.includes(playerNameAndDorsal)) {
-                                     if (warningMessage) warningMessage += ', '; 
-                                     warningMessage += playerNameAndDorsal;
+                                    if (warningMessage) warningMessage += ', ';
+                                    warningMessage += playerNameAndDorsal;
                                 }
                             }
                             playerAssigned = true;
@@ -716,19 +729,19 @@
                     throw new Error(`Validación final: El jugador #${player.dorsal} (${player.name}) jugó solo ${count} sextos, no cumpliendo el mínimo de ${MIN_PLAY_SEXTOS}. Esto indica un problema en el algoritmo o en los datos de entrada.`);
                 }
             }
-            
+
             if (warningMessage) {
                 showMessage(`Advertencia: ${warningMessage} han jugado ${MAX_PLAY_SEXTOS_PER_PLAYER + 1} sextos para completar el partido, lo cual es necesario con el número de jugadores actual.`, 'warning');
             } else {
                 showMessage('¡Quintetos generados con éxito! Todos los jugadores cumplen las reglas de 2-3 sextos y no 3 seguidos.', 'info');
             }
-            
+
             return sextos;
         }
 
         function displayQuintets(quintets, playersAvailableToday) {
             const sextoCards = quintetsDisplay.querySelectorAll('.sexto-card');
-            
+
             const playerSextoCounts = {};
             playersAvailableToday.forEach(player => playerSextoCounts[player.dorsal] = 0);
             quintets.forEach(sexto => {
@@ -739,17 +752,17 @@
 
             sextoCards.forEach((card, sextoIndex) => {
                 const ul = card.querySelector('ul');
-                ul.innerHTML = ''; 
-                ul.ondrop = null; 
+                ul.innerHTML = '';
+                ul.ondrop = null;
                 ul.ondragover = null;
 
                 if (quintets[sextoIndex] && quintets[sextoIndex].length > 0) {
                     quintets[sextoIndex].forEach(player => {
                         const li = document.createElement('li');
-                        
-                        const playerDisplaySpan = document.createElement('span'); 
+
+                        const playerDisplaySpan = document.createElement('span');
                         playerDisplaySpan.textContent = `#${player.dorsal} ${player.name}`;
-                        playerDisplaySpan.classList.add('player-display'); 
+                        playerDisplaySpan.classList.add('player-display');
 
                         if (playerSextoCounts[player.dorsal] === MAX_PLAY_SEXTOS_PER_PLAYER) {
                             playerDisplaySpan.classList.add('highlight-three-sextos');
@@ -767,9 +780,9 @@
                         li.appendChild(removeBtn);
                         ul.appendChild(li);
                     });
-                } 
-                
-                if (quintets[sextoIndex].length < PLAYERS_PER_SEXTO) {
+                }
+
+                if (quintets[sextoIndex] && quintets[sextoIndex].length < PLAYERS_PER_SEXTO) {
                     renderReplacementSelector(sextoIndex, ul, quintets[sextoIndex]);
                 }
             });
@@ -783,18 +796,18 @@
                 ul.ondrop = null;
                 ul.ondragover = null;
             });
-            summarySection.style.display = 'none'; 
-            saveManualChangesBtn.style.display = 'none'; 
+            summarySection.style.display = 'none';
+            saveManualChangesBtn.style.display = 'none';
         }
 
         function showMessage(msg, type) {
             messageArea.textContent = msg;
-            messageArea.className = `message-area ${type}-message`; 
+            messageArea.className = `message-area ${type}-message`;
             messageArea.style.display = 'block';
-            if (type !== 'error') { 
+            if (type !== 'error') {
                 setTimeout(() => {
                     hideMessage();
-                }, 7000); 
+                }, 7000);
             }
         }
 
@@ -802,11 +815,11 @@
             messageArea.style.display = 'none';
         }
 
-        function displaySummary(playersAvailableToday, quintetsToSummarize) { 
+        function displaySummary(playersAvailableToday, quintetsToSummarize) {
             const summaryUl = summaryList.querySelector('ul');
-            summaryUl.innerHTML = ''; 
+            summaryUl.innerHTML = '';
 
-            const playerSextoCounts = {}; 
+            const playerSextoCounts = {};
             playersAvailableToday.forEach(player => playerSextoCounts[player.dorsal] = 0);
 
             quintetsToSummarize.forEach(sexto => {
@@ -824,7 +837,7 @@
                 summaryUl.appendChild(li);
             });
 
-            summarySection.style.display = 'block'; 
+            summarySection.style.display = 'block';
         }
 
         saveDistributionBtn.addEventListener('click', () => {
@@ -836,8 +849,8 @@
 
         function removePlayer(sextoIndex, playerDorsalToRemove) {
             currentQuintets[sextoIndex] = currentQuintets[sextoIndex].filter(p => p.dorsal !== playerDorsalToRemove);
-            
-            displayQuintets(currentQuintets, playersAvailableForCurrentGame); 
+
+            displayQuintets(currentQuintets, playersAvailableForCurrentGame);
 
             saveManualChangesBtn.style.display = 'block';
             showMessage('Jugador quitado. Selecciona un reemplazo en el desplegable si es necesario. Luego "Guardar Cambios Manuales".', 'info');
@@ -845,8 +858,8 @@
 
         function renderReplacementSelector(sextoIndex, ulElement, currentPlayersInSexto) {
             const ul = ulElement || quintetsDisplay.querySelector(`.sexto-card[data-sexto-index="${sextoIndex}"] ul`);
-            
-            const li = document.createElement('li'); 
+
+            const li = document.createElement('li');
             const select = document.createElement('select');
             select.classList.add('replace-player-select');
             select.dataset.sextoIndex = sextoIndex;
@@ -857,25 +870,25 @@
             defaultOption.textContent = "Añadir jugador...";
             select.appendChild(defaultOption);
 
-            const playersNotInCurrentSexto = allPlayers.filter(p => 
-                playersAvailableForCurrentGame.some(ap => ap.dorsal === p.dorsal) && 
-                !currentPlayersInSexto.some(cp => cp.dorsal === p.dorsal) 
+            const playersNotInCurrentSexto = allPlayers.filter(p =>
+                playersAvailableForCurrentGame.some(ap => ap.dorsal === p.dorsal) &&
+                !currentPlayersInSexto.some(cp => cp.dorsal === p.dorsal)
             );
 
-            playersNotInCurrentSexto.sort((a,b) => a.dorsal - b.dorsal).forEach(player => {
+            playersNotInCurrentSexto.sort((a, b) => a.dorsal - b.dorsal).forEach(player => {
                 const option = document.createElement('option');
                 option.value = player.dorsal;
                 option.textContent = `#${player.dorsal} ${player.name}`;
                 select.appendChild(option);
             });
-            
+
             li.appendChild(select);
             ul.appendChild(li);
         }
 
         function replacePlayer(sextoIndex, newDorsal) {
-            if (newDorsal === null || isNaN(newDorsal) || newDorsal === 0) { 
-                return; 
+            if (newDorsal === null || isNaN(newDorsal) || newDorsal === 0) {
+                return;
             }
 
             const playerToAdd = allPlayers.find(p => p.dorsal === newDorsal);
@@ -887,7 +900,7 @@
             if (!playersAvailableForCurrentGame.some(p => p.dorsal === newDorsal)) {
                 showMessage(`El jugador #${newDorsal} no está disponible para este partido.`, 'error');
                 const selector = document.querySelector(`.sexto-card[data-sexto-index="${sextoIndex}"] .replace-player-select`);
-                if (selector) selector.value = ""; 
+                if (selector) selector.value = "";
                 return;
             }
 
@@ -895,21 +908,21 @@
             if (currentQuintets[sextoIndex].some(p => p.dorsal === newDorsal)) {
                 showMessage(`El jugador #${newDorsal} ya está en el Sexto ${sextoIndex + 1}.`, 'error');
                 const selector = document.querySelector(`.sexto-card[data-sexto-index="${sextoIndex}"] .replace-player-select`);
-                if (selector) selector.value = ""; 
+                if (selector) selector.value = "";
                 return;
             }
 
             if (currentQuintets[sextoIndex].length >= PLAYERS_PER_SEXTO) {
-                 showMessage(`El Sexto ${sextoIndex + 1} ya está lleno (${PLAYERS_PER_SEXTO} jugadores).`, 'error');
-                 const selector = document.querySelector(`.sexto-card[data-sexto-index="${sextoIndex}"] .replace-player-select`);
-                 if (selector) selector.value = ""; 
-                 return;
+                showMessage(`El Sexto ${sextoIndex + 1} ya está lleno (${PLAYERS_PER_SEXTO} jugadores).`, 'error');
+                const selector = document.querySelector(`.sexto-card[data-sexto-index="${sextoIndex}"] .replace-player-select`);
+                if (selector) selector.value = "";
+                return;
             }
 
             currentQuintets[sextoIndex].push(playerToAdd);
-            
-            displayQuintets(currentQuintets, playersAvailableForCurrentGame); 
-            
+
+            displayQuintets(currentQuintets, playersAvailableForCurrentGame);
+
             saveManualChangesBtn.style.display = 'block';
             showMessage('Jugador añadido. Haz clic en "Guardar Cambios Manuales" para actualizar el resumen y validar.', 'info');
         }
@@ -931,7 +944,7 @@
                 });
             });
 
-            let currentWarningMessagePlayers = []; 
+            let currentWarningMessagePlayers = [];
             let currentErrorMessage = '';
 
             for (let s = 0; s < 6; s++) {
@@ -948,13 +961,13 @@
                 if (count > MAX_PLAY_SEXTOS_PER_PLAYER) {
                     currentWarningMessagePlayers.push(`${player.name} (#${player.dorsal})`);
                 }
-                
-                for (let s = 2; s < 6; s++) { 
-                    const history = tempPlayerSextoHistory[player.dorsal].filter(idx => idx <= s); 
-                    const playedConsecutive = history.includes(s) && history.includes(s-1) && history.includes(s-2);
-                    
+
+                for (let s = 2; s < 6; s++) {
+                    const history = tempPlayerSextoHistory[player.dorsal].filter(idx => idx <= s);
+                    const playedConsecutive = history.includes(s) && history.includes(s - 1) && history.includes(s - 2);
+
                     if (playedConsecutive) {
-                        currentErrorMessage += `El jugador #${player.dorsal} (${player.name}) juega 3 sextos seguidos (Sextos ${s-2+1}, ${s-1+1}, ${s+1}). `; 
+                        currentErrorMessage += `El jugador #${player.dorsal} (${player.name}) juega 3 sextos seguidos (Sextos ${s - 2 + 1}, ${s - 1 + 1}, ${s + 1}). `;
                     }
                 }
             }
@@ -962,14 +975,14 @@
             if (currentErrorMessage) {
                 showMessage(`Errores en la distribución manual: ${currentErrorMessage} Por favor, ajusta los jugadores.`, 'error');
             } else if (currentWarningMessagePlayers.length > 0) {
-                 showMessage(`Advertencia: ${currentWarningMessagePlayers.join(', ')} han jugado ${MAX_PLAY_SEXTOS_PER_PLAYER + 1} sextos. ¡Cambios guardados!`, 'warning');
+                showMessage(`Advertencia: ${currentWarningMessagePlayers.join(', ')} han jugado ${MAX_PLAY_SEXTOS_PER_PLAYER + 1} sextos. ¡Cambios guardados!`, 'warning');
             } else {
                 showMessage('¡Cambios manuales guardados con éxito! La distribución cumple las reglas FBM.', 'info');
             }
 
-            displaySummary(playersAvailableForCurrentGame, currentQuintets); 
-            displayQuintets(currentQuintets, playersAvailableForCurrentGame); 
-            saveManualChangesBtn.style.display = 'none'; 
+            displaySummary(playersAvailableForCurrentGame, currentQuintets);
+            displayQuintets(currentQuintets, playersAvailableForCurrentGame);
+            saveManualChangesBtn.style.display = 'none';
         });
 
         // --- Análisis de Habilidades ---
@@ -979,14 +992,14 @@
             document.getElementById('quintetsDisplay').style.display = 'none';
             document.getElementById('summarySection').style.display = 'none';
             document.getElementById('saveManualChangesBtn').style.display = 'none';
-            document.getElementById('saveDistributionBtn').style.display = 'none'; 
+            document.getElementById('saveDistributionBtn').style.display = 'none';
         });
 
         hideSkillAnalysisBtn.addEventListener('click', () => {
             skillAnalysisSection.style.display = 'none';
             // Volver a mostrar las secciones principales de quintetos al ocultar el análisis
-            document.getElementById('quintetsDisplay').style.display = 'grid'; 
-            document.getElementById('summarySection').style.display = 'block'; 
+            document.getElementById('quintetsDisplay').style.display = 'grid';
+            document.getElementById('summarySection').style.display = 'block';
         });
 
         function displaySkillAnalysis() {
@@ -1000,13 +1013,13 @@
 
             skills.forEach(skill => {
                 const ul = document.getElementById(skill.ulId);
-                ul.innerHTML = ''; 
-                
+                ul.innerHTML = '';
+
                 const sortedPlayers = [...allPlayers].sort((a, b) => b.skills[skill.key] - a.skills[skill.key]);
 
                 sortedPlayers.forEach(player => {
                     const skillLevel = player.skills[skill.key];
-                    const barWidth = (skillLevel / 5) * 100; 
+                    const barWidth = (skillLevel / 5) * 100;
 
                     const totalSkills = Object.values(player.skills).reduce((sum, current) => sum + current, 0);
                     const averageSkill = totalSkills / Object.keys(player.skills).length;
@@ -1023,13 +1036,13 @@
                     if (averageSkill >= 4.0) {
                         li.classList.add('highlight-overall-skill');
                     }
-                    
+
                     ul.appendChild(li);
                 });
             });
 
             skillAnalysisSection.style.display = 'block';
-            skillAnalysisSection.scrollIntoView({ behavior: 'smooth', block: 'start' }); 
+            skillAnalysisSection.scrollIntoView({ behavior: 'smooth', block: 'start' });
         }
 
     </script>
