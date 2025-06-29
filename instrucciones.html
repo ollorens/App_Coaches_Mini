@@ -1,0 +1,127 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Instrucciones - App Baloncesto Mini FBM</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            margin: 0;
+            padding: 20px;
+            background-color: #f4f7f6;
+            color: #333;
+        }
+
+        .container {
+            max-width: 900px;
+            margin: 20px auto;
+            background-color: #fff;
+            padding: 30px;
+            border-radius: 8px;
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+        }
+
+        h1, h2, h3 {
+            color: #0056b3;
+            text-align: center;
+            margin-bottom: 25px;
+        }
+
+        h2 {
+           text-align: left;
+           border-bottom: 2px solid #e0e0e0;
+           padding-bottom: 10px;
+        }
+        
+        p, li {
+            line-height: 1.6;
+            font-size: 1.1em;
+            color: #555;
+        }
+
+        ul {
+            list-style-position: inside;
+            padding-left: 0;
+        }
+
+        .section-card {
+            background-color: #e9f5ff;
+            padding: 20px;
+            border-radius: 8px;
+            margin-bottom: 30px;
+            border-left: 5px solid #007bff;
+        }
+
+        .home-button {
+            background-color: #6c757d;
+            color: white;
+            padding: 12px 20px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 1em;
+            transition: background-color 0.3s ease;
+            display: block;
+            width: fit-content;
+            margin: 20px auto 0;
+            text-decoration: none;
+        }
+
+        .home-button:hover {
+            background-color: #5a6268;
+        }
+        
+        code {
+            background-color: #e3e3e3;
+            padding: 2px 5px;
+            border-radius: 4px;
+            font-family: 'Courier New', Courier, monospace;
+        }
+
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Instrucciones de Uso</h1>
+
+        <div class="section-card">
+            <h2>Propósito de la Aplicación</h2>
+            <p>
+                Esta aplicación está diseñada para ser la herramienta principal de un entrenador de baloncesto de categoría Mini. Sus objetivos son dos:
+            </p>
+            <ul>
+                <li><strong>Gestionar la plantilla y sus habilidades:</strong> Permite tener un registro digital de todos los jugadores y una evaluación de sus capacidades técnicas y tácticas.</li>
+                <li><strong>Planificar partidos:</strong> Automatiza la creación de alineaciones para los 6 sextos de un partido, asegurando que se cumplen las reglas de participación de la FBM.</li>
+            </ul>
+        </div>
+
+        <div class="section-card">
+            <h2>Paso 1: Gestionar la Plantilla (Roster y Habilidades)</h2>
+            <p>
+                Es el corazón de la aplicación. Antes de poder planificar un partido, necesitas tener a tus jugadores en el sistema.
+            </p>
+            <ul>
+                <li><strong>Carga Inicial:</strong> La primera vez que abras la app, se cargarán los jugadores del fichero <code>players.json</code>. Después, los datos se guardarán en el navegador.</li>
+                <li><strong>Añadir Jugadores:</strong> Ve a "Roster y Habilidades" y usa el formulario para añadir jugadores. Deberás rellenar sus datos y valorar sus habilidades de 0 a 5.</li>
+                <li><strong>Editar y Eliminar:</strong> En la tabla inferior verás a todo el equipo. Puedes modificar los datos de cualquier jugador o eliminarlo de la plantilla usando los botones de "Acciones".</li>
+            </ul>
+        </div>
+
+        <div class="section-card">
+            <h2>Paso 2: Día de Partido (Asistencia y Quintetos)</h2>
+            <p>
+                Esta es la sección que usarás antes de cada encuentro.
+            </p>
+            <ul>
+                <li><strong>Pasar Asistencia:</strong> Lo primero es seleccionar los jugadores disponibles para el partido. La app requiere entre 9 y 12 jugadores para poder generar las alineaciones.</li>
+                <li><strong>Generar Quintetos:</strong> Con los jugadores seleccionados, pulsa el botón "Generar Quintetos". La aplicación distribuirá a los jugadores en los 6 sextos, asegurando que cada uno juegue un mínimo de 2 y un máximo de 3 periodos.</li>
+                <li><strong>Revisar y Ajustar:</strong> Puedes ver la distribución propuesta y el resumen de sextos por jugador. Si necesitas hacer un cambio, puedes quitar a un jugador de un sexto (con el botón X) y añadir a otro desde el menú desplegable que aparecerá.</li>
+            </ul>
+        </div>
+        
+        <a href="index.html" class="home-button">Volver al Inicio</a>
+
+    </div>
+</body>
+</html>
