@@ -1,0 +1,122 @@
+[
+    {
+        "name": "Juan",
+        "age": 9,
+        "dorsal": 1,
+        "skills": {
+            "bote": 4,
+            "lectura": 3,
+            "pase": 4,
+            "defensaInd": 3,
+            "tacticaDef": 2
+        }
+    },
+    {
+        "name": "María",
+        "age": 10,
+        "dorsal": 2,
+        "skills": {
+            "bote": 5,
+            "lectura": 4,
+            "pase": 5,
+            "defensaInd": 3,
+            "tacticaDef": 3
+        }
+    },
+    {
+        "name": "Pedro",
+        "age": 8,
+        "dorsal": 3,
+        "skills": {
+            "bote": 3,
+            "lectura": 2,
+            "pase": 3,
+            "defensaInd": 4,
+            "tacticaDef": 4
+        }
+    },
+    {
+        "name": "Laura",
+        "age": 9,
+        "dorsal": 4,
+        "skills": {
+            "bote": 4,
+            "lectura": 4,
+            "pase": 3,
+            "defensaInd": 4,
+            "tacticaDef": 3
+        }
+    },
+    {
+        "name": "Carlos",
+        "age": 10,
+        "dorsal": 5,
+        "skills": {
+            "bote": 3,
+            "lectura": 3,
+            "pase": 4,
+            "defensaInd": 2,
+            "tacticaDef": 3
+        }
+    },
+    {
+        "name": "Sofía",
+        "age": 8,
+        "dorsal": 6,
+        "skills": {
+            "bote": 2,
+            "lectura": 3,
+            "pase": 3,
+            "defensaInd": 5,
+            "tacticaDef": 5
+        }
+    },
+    {
+        "name": "Miguel",
+        "age": 11,
+        "dorsal": 7,
+        "skills": {
+            "bote": 4,
+            "lectura": 5,
+            "pase": 4,
+            "defensaInd": 4,
+            "tacticaDef": 3
+        }
+    },
+    {
+        "name": "Paula",
+        "age": 9,
+        "dorsal": 8,
+        "skills": {
+            "bote": 3,
+            "lectura": 3,
+            "pase": 3,
+            "defensaInd": 3,
+            "tacticaDef": 3
+        }
+    },
+    {
+        "name": "Diego",
+        "age": 10,
+        "dorsal": 9,
+        "skills": {
+            "bote": 5,
+            "lectura": 4,
+            "pase": 4,
+            "defensaInd": 4,
+            "tacticaDef": 4
+        }
+    ,}
+    {
+        "name": "Fernando",
+        "age": 10,
+        "dorsal": 44,
+        "skills": {
+            "bote": 5,
+            "lectura": 4,
+            "pase": 4,
+            "defensaInd": 4,
+            "tacticaDef": 4
+        }
+    }
+]
