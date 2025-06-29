@@ -1,0 +1,744 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Roster y Habilidades - Baloncesto Mini FBM</title>
+    <style>
+        /* Estilos CSS Base (se repiten en ambas páginas para consistencia visual) */
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            margin: 0;
+            padding: 20px;
+            background-color: #f4f7f6;
+            color: #333;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background-color: #fff;
+            padding: 30px;
+            border-radius: 8px;
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+        }
+
+        h1, h2 {
+            color: #0056b3;
+            text-align: center;
+            margin-bottom: 25px;
+        }
+
+        button {
+            background-color: #007bff;
+            color: white;
+            padding: 12px 20px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 1em;
+            transition: background-color 0.3s ease;
+            margin: 20px 10px 20px 0; 
+        }
+
+        button:hover {
+            background-color: #0056b3;
+        }
+
+        button:disabled {
+            background-color: #cccccc;
+            cursor: not-allowed;
+        }
+
+        /* Estilos específicos para las secciones */
+        .section-card {
+            background-color: #e9f5ff;
+            padding: 20px;
+            border-radius: 8px;
+            margin-bottom: 30px;
+            border-left: 5px solid #007bff;
+        }
+        
+        .section-card.roster-management {
+            background-color: #e6f7e6; /* Verde claro para roster */
+            border-left: 5px solid #28a745;
+        }
+
+        .section-card h2 {
+            margin-top: 0;
+            color: #0056b3;
+            text-align: left;
+            margin-bottom: 15px;
+            display: inline-block; 
+            vertical-align: middle;
+        }
+        .section-card.roster-management h2 {
+            color: #218838; /* Verde para h2 del roster */
+        }
+        .section-card.quintet-planning h2 {
+            color: #0056b3; /* Azul para h2 de quintetos */
+        }
+
+
+        .action-buttons {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 20px;
+            align-items: center;
+            flex-wrap: wrap; 
+        }
+        
+        /* Estilos específicos del roster */
+        .roster-info {
+            text-align: center;
+            font-size: 1.1em;
+            font-weight: bold;
+            color: #555;
+            margin-bottom: 20px;
+        }
+
+        .form-section {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 15px;
+            margin-bottom: 30px;
+            padding: 20px;
+            border: 1px solid #e0e0e0;
+            border-radius: 8px;
+            background-color: #f9f9f9;
+        }
+
+        .skill-group {
+            flex: 1 1 calc(50% - 30px); 
+            min-width: 250px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 10px;
+        }
+        .skill-group label {
+            flex-basis: 120px; 
+            margin-bottom: 0;
+            white-space: nowrap; 
+        }
+        .skill-group input[type="number"] {
+            flex-grow: 1; 
+            max-width: 80px; 
+        }
+        .basic-player-info {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 15px;
+            margin-bottom: 20px;
+            width: 100%; 
+        }
+        .basic-player-info .form-group {
+            flex: 1 1 calc(33% - 30px); 
+            min-width: 200px;
+        }
+        
+        .player-list table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 20px;
+        }
+
+        .player-list th, .player-list td {
+            border: 1px solid #ddd;
+            padding: 12px;
+            text-align: left;
+        }
+        .player-list th.skill-header, .player-list td.skill-data {
+            width: 80px; 
+            text-align: center; 
+        }
+
+        .player-list th {
+            background-color: #28a745; 
+            color: white;
+            font-weight: bold;
+        }
+
+        .player-list tr:nth-child(even) {
+            background-color: #f2f2f2;
+        }
+
+        .player-list tr:hover {
+            background-color: #e9e9e9;
+        }
+
+        .player-list .actions button {
+            background-color: #007bff; 
+            margin-right: 5px;
+            padding: 8px 12px;
+            font-size: 0.9em;
+            margin-bottom: 5px; 
+        }
+
+        .player-list .actions button.delete {
+            background-color: #dc3545; 
+        }
+        .message-area-roster {
+            padding: 10px;
+            margin-top: 10px;
+            border-radius: 5px;
+            font-weight: bold;
+        }
+        .message-area-roster.error-message {
+            background-color: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+        }
+        .message-area-roster.info-message {
+            background-color: #d1ecf1;
+            color: #0c5460;
+            border: 1px solid #bee5eb;
+        }
+
+        /* Responsive adjustments */
+        @media (max-width: 768px) {
+            .container {
+                padding: 15px;
+            }
+            .form-group, .skill-group {
+                flex: 1 1 100%; 
+                min-width: unset;
+            }
+            .skill-group label {
+                flex-basis: auto; 
+            }
+            .player-list table, .player-list thead, .player-list tbody, .player-list th, .player-list td, .player-list tr {
+                display: block;
+            }
+            .player-list thead tr {
+                position: absolute;
+                top: -9999px;
+                left: -9999px;
+            }
+            .player-list tr {
+                margin-bottom: 15px;
+                border: 1px solid #ddd;
+                border-radius: 5px;
+                box-shadow: 0 2px 5px rgba(0,0,0,0.05);
+            }
+            .player-list td {
+                border: none;
+                border-bottom: 1px solid #eee;
+                position: relative;
+                padding-left: 50%;
+                text-align: right;
+            }
+            .player-list td:before {
+                content: attr(data-label);
+                position: absolute;
+                left: 6px;
+                width: 45%;
+                padding-right: 10px;
+                white-space: nowrap;
+                text-align: left;
+                font-weight: bold;
+                color: #0056b3;
+            }
+            .player-list td:last-child {
+                border-bottom: none;
+            }
+            .player-list .actions {
+                text-align: center;
+                padding: 10px 0;
+            }
+            .player-list .actions button {
+                display: block;
+                width: calc(100% - 10px); 
+                margin: 5px auto;
+            }
+        }
+        
+        /* Estilos de navegación */
+        .nav-buttons {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+        .nav-buttons button {
+            background-color: #555;
+            margin: 0 10px;
+        }
+        .nav-buttons button:hover {
+            background-color: #333;
+        }
+        .nav-buttons button.active {
+            background-color: #007bff;
+        }
+
+        /* Botón de volver al inicio */
+        .home-button {
+            background-color: #6c757d; 
+            margin-bottom: 20px;
+            display: inline-block;
+            text-decoration: none; 
+            color: white; 
+            padding: 10px 15px; 
+            font-size: 0.9em; 
+        }
+        .home-button:hover {
+            background-color: #5a6268;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1 id="mainTitle">App Baloncesto Mini FBM</h1>
+
+        <div class="nav-buttons">
+            <button onclick="location.href='asistencia_quintetos.html'">Asistencia y Quintetos</button>
+            <button class="active">Roster y Habilidades</button>
+            <button class="home-button" onclick="location.href='mini_basket_app.html'">Volver al Inicio</button>
+        </div>
+
+        <div class="section-card roster-management">
+            <h2 id="teamRosterTitle">Roster: Mi Equipo</h2>
+
+            <div class="action-buttons">
+                <label for="teamNameInput">Nombre del Equipo:</label>
+                <input type="text" id="teamNameInput" value="Mi Equipo">
+                <label for="coachNameInput">Nombre del Coach:</label>
+                <input type="text" id="coachNameInput" placeholder="Introduce tu nombre">
+            </div>
+            
+            <div class="roster-info">
+                Jugadores en Roster: <span id="playerCount">0</span>
+            </div>
+
+            <h3>Añadir Nuevo Jugador</h3>
+            <div class="form-section">
+                <div class="basic-player-info">
+                    <div class="form-group">
+                        <label for="playerName">Nombre:</label>
+                        <input type="text" id="playerName" placeholder="Nombre del jugador">
+                    </div>
+                    <div class="form-group">
+                        <label for="playerAge">Edad:</label>
+                        <input type="number" id="playerAge" placeholder="Edad" min="6" max="12">
+                    </div>
+                    <div class="form-group">
+                        <label for="playerDorsal">Dorsal:</label>
+                        <input type="number" id="playerDorsal" placeholder="Dorsal" min="0">
+                    </div>
+                </div>
+                
+                <h4>Nivel de Habilidades (0-5)</h4>
+                <div class="skill-inputs">
+                    <div class="skill-group">
+                        <label for="skillBote">Bote:</label>
+                        <input type="number" id="skillBote" min="0" max="5" value="3">
+                    </div>
+                    <div class="skill-group">
+                        <label for="skillLectura">Lectura del juego:</label>
+                        <input type="number" id="skillLectura" min="0" max="5" value="3">
+                    </div>
+                    <div class="skill-group">
+                        <label for="skillPase">Pase:</label>
+                        <input type="number" id="skillPase" min="0" max="5" value="3">
+                    </div>
+                    <div class="skill-group">
+                        <label for="skillDefensaInd">Defensa individual:</label>
+                        <input type="number" id="skillDefensaInd" min="0" max="5" value="3">
+                    </div>
+                    <div class="skill-group">
+                        <label for="skillTactDef">Táctica defensiva:</label>
+                        <input type="number" id="skillTactDef" min="0" max="5" value="3">
+                    </div>
+                </div>
+                
+                <button id="addPlayerBtn">Añadir Jugador</button>
+                <div id="addPlayerMessage" class="message-area-roster" style="display:none;"></div>
+            </div>
+
+            <div class="player-list">
+                <h3>Jugadores del Equipo</h3>
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Dorsal</th>
+                            <th>Nombre</th>
+                            <th>Edad</th>
+                            <th class="skill-header">Bote</th>
+                            <th class="skill-header">Lectura</th>
+                            <th class="skill-header">Pase</th>
+                            <th class="skill-header">Def. Ind.</th>
+                            <th class="skill-header">Tác. Def.</th>
+                            <th>Acciones</th>
+                        </tr>
+                    </thead>
+                    <tbody id="playersTableBody">
+                        </tbody>
+                </table>
+            </div>
+        </div>
+
+        <div id="editDataSection" class="section-card roster-management" style="display:none;">
+            <h2>Editar Datos de <span id="editingPlayerNameData"></span></h2>
+            <p>Dorsal Actual: <span id="editingPlayerDorsalData"></span></p>
+
+            <div class="form-section">
+                <div class="basic-player-info">
+                    <div class="form-group">
+                        <label for="playerNameEdit">Nombre:</label>
+                        <input type="text" id="playerNameEdit">
+                    </div>
+                    <div class="form-group">
+                        <label for="playerAgeEdit">Edad:</label>
+                        <input type="number" id="playerAgeEdit" min="6" max="12">
+                    </div>
+                    <div class="form-group">
+                        <label for="playerDorsalEdit">Dorsal:</label>
+                        <input type="number" id="playerDorsalEdit" min="0">
+                    </div>
+                </div>
+                
+                <button id="editDataSaveBtn">Guardar Datos</button>
+                <button id="editDataCancelBtn" class="delete">Cancelar</button>
+                <div id="editDataMessage" class="message-area-roster" style="display:none;"></div>
+            </div>
+        </div>
+
+        <div id="editSkillsSection" class="section-card roster-management" style="display:none;">
+            <h2>Editar Habilidades de <span id="editingPlayerNameSkills"></span></h2>
+            <p>Dorsal: <span id="editingPlayerDorsalSkills"></span></p>
+
+            <div class="form-section">
+                <div class="skill-inputs">
+                    <div class="skill-group">
+                        <label for="skillBoteEdit">Bote:</label>
+                        <input type="number" id="skillBoteEdit" min="0" max="5">
+                    </div>
+                    <div class="skill-group">
+                        <label for="skillLecturaEdit">Lectura del juego:</label>
+                        <input type="number" id="skillLecturaEdit" min="0" max="5">
+                    </div>
+                    <div class="skill-group">
+                        <label for="skillPaseEdit">Pase:</label>
+                        <input type="number" id="skillPaseEdit" min="0" max="5">
+                    </div>
+                    <div class="skill-group">
+                        <label for="skillDefensaIndEdit">Defensa individual:</label>
+                        <input type="number" id="skillDefensaIndEdit" min="0" max="5">
+                    </div>
+                    <div class="skill-group">
+                        <label for="skillTactDefEdit">Táctica defensiva:</label>
+                        <input type="number" id="skillTactDefEdit" min="0" max="5">
+                    </div>
+                </div>
+                
+                <button id="editSkillsSaveBtn">Guardar Habilidades</button>
+                <button id="editSkillsCancelBtn" class="delete">Cancelar</button>
+                <div id="editSkillsMessage" class="message-area-roster" style="display:none;"></div>
+            </div>
+        </div>
+
+    </div>
+
+    <script>
+        // --- Variables y Constantes Globales ---
+        const teamNameInput = document.getElementById('teamNameInput');
+        const coachNameInput = document.getElementById('coachNameInput');
+        const teamRosterTitle = document.getElementById('teamRosterTitle'); 
+        const mainTitle = document.getElementById('mainTitle'); 
+
+        // Add Player form elements
+        const playerNameInput = document.getElementById('playerName');
+        const playerAgeInput = document.getElementById('playerAge');
+        const playerDorsalInput = document.getElementById('playerDorsal');
+        const skillBoteInput = document.getElementById('skillBote');
+        const skillLecturaInput = document.getElementById('skillLectura');
+        const skillPaseInput = document.getElementById('skillPase');
+        const skillDefensaIndInput = document.getElementById('skillDefensaInd');
+        const skillTactDefInput = document.getElementById('skillTactDef');
+        const addPlayerBtn = document.getElementById('addPlayerBtn');
+        const addPlayerMessage = document.getElementById('addPlayerMessage'); 
+
+        // Edit Player Data form elements
+        const editDataSection = document.getElementById('editDataSection');
+        const editingPlayerNameDataSpan = document.getElementById('editingPlayerNameData');
+        const editingPlayerDorsalDataSpan = document.getElementById('editingPlayerDorsalData');
+        const playerNameEdit = document.getElementById('playerNameEdit');
+        const playerAgeEdit = document.getElementById('playerAgeEdit');
+        const playerDorsalEdit = document.getElementById('playerDorsalEdit');
+        const editDataSaveBtn = document.getElementById('editDataSaveBtn');
+        const editDataCancelBtn = document.getElementById('editDataCancelBtn');
+        const editDataMessage = document.getElementById('editDataMessage'); 
+
+        // Edit Player Skills form elements
+        const editSkillsSection = document.getElementById('editSkillsSection');
+        const editingPlayerNameSkillsSpan = document.getElementById('editingPlayerNameSkills');
+        const editingPlayerDorsalSkillsSpan = document.getElementById('editingPlayerDorsalSkills');
+        const skillBoteEdit = document.getElementById('skillBoteEdit');
+        const skillLecturaEdit = document.getElementById('skillLecturaEdit');
+        const skillPaseEdit = document.getElementById('skillPaseEdit');
+        const skillDefensaIndEdit = document.getElementById('skillDefensaIndEdit');
+        const skillTactDefEdit = document.getElementById('skillTactDefEdit');
+        const editSkillsSaveBtn = document.getElementById('editSkillsSaveBtn');
+        const editSkillsCancelBtn = document.getElementById('editSkillsCancelBtn');
+        const editSkillsMessage = document.getElementById('editSkillsMessage'); 
+        let editingPlayerIndex = -1; 
+
+
+        const playersTableBody = document.getElementById('playersTableBody');
+        const playerCountSpan = document.getElementById('playerCount');
+
+        let allPlayers = []; 
+
+        // --- Funciones Comunes e Inicialización ---
+        document.addEventListener('DOMContentLoaded', () => {
+            loadAllData();
+            renderPlayersInRosterTable(); 
+        });
+
+        function loadAllData() {
+            try {
+                const savedTeamName = localStorage.getItem('teamName');
+                const savedCoachName = localStorage.getItem('coachName');
+                const savedPlayers = localStorage.getItem('players');
+
+                if (savedTeamName) {
+                    teamNameInput.value = savedTeamName;
+                    teamRosterTitle.textContent = `Roster: ${savedTeamName}`;
+                }
+                if (savedCoachName) {
+                    coachNameInput.value = savedCoachName;
+                }
+                if (savedPlayers) {
+                    allPlayers = JSON.parse(savedPlayers);
+                    allPlayers.forEach(player => {
+                        if (!player.skills) { 
+                            player.skills = { bote: 3, lectura: 3, pase: 3, defensaInd: 3, tacticaDef: 3 };
+                        }
+                    });
+                } else {
+                    allPlayers = []; 
+                }
+            } catch (e) {
+                console.error("Error al cargar datos del localStorage:", e);
+                localStorage.clear();
+                allPlayers = [];
+                alert('Error al cargar datos del equipo. El almacenamiento ha sido limpiado. Por favor, vuelve a añadir jugadores.');
+            }
+        }
+
+        function saveAllData() {
+            localStorage.setItem('teamName', teamNameInput.value);
+            localStorage.setItem('coachName', coachNameInput.value);
+            localStorage.setItem('players', JSON.stringify(allPlayers));
+        }
+
+        // --- Gestión de Roster (Integrada) ---
+        teamNameInput.addEventListener('input', () => {
+            teamRosterTitle.textContent = `Roster: ${teamNameInput.value}`;
+            saveAllData();
+        });
+
+        coachNameInput.addEventListener('input', () => {
+            saveAllData();
+        });
+
+        function renderPlayersInRosterTable() {
+            playersTableBody.innerHTML = '';
+            allPlayers.forEach((player, index) => {
+                const row = playersTableBody.insertRow();
+                row.innerHTML = `
+                    <td data-label="Dorsal">${player.dorsal}</td>
+                    <td data-label="Nombre">${player.name}</td>
+                    <td data-label="Edad">${player.age}</td>
+                    <td data-label="Bote" class="skill-data">${player.skills.bote}</td>
+                    <td data-label="Lectura" class="skill-data">${player.skills.lectura}</td>
+                    <td data-label="Pase" class="skill-data">${player.skills.pase}</td>
+                    <td data-label="Def. Ind." class="skill-data">${player.skills.defensaInd}</td>
+                    <td data-label="Tác. Def." class="skill-data">${player.skills.tacticaDef}</td>
+                    <td data-label="Acciones" class="actions">
+                        <button onclick="editPlayerData(${index})">Editar Datos</button>
+                        <button onclick="editPlayerSkills(${index})">Editar Habilidades</button>
+                        <button class="delete" onclick="deletePlayer(${index})">Eliminar</button>
+                    </td>
+                `;
+            });
+            playerCountSpan.textContent = allPlayers.length;
+            saveAllData(); 
+        }
+
+        addPlayerBtn.addEventListener('click', () => {
+            const name = playerNameInput.value.trim();
+            const age = parseInt(playerAgeInput.value);
+            const dorsal = parseInt(playerDorsalInput.value);
+            const bote = parseInt(skillBoteInput.value);
+            const lectura = parseInt(skillLecturaInput.value);
+            const pase = parseInt(skillPaseInput.value);
+            const defensaInd = parseInt(skillDefensaIndInput.value);
+            const tacticaDef = parseInt(skillTactDefInput.value);
+
+
+            if (!name) { displayRosterMessage('El nombre no puede estar vacío.', 'error'); return; }
+            if (isNaN(age) || age < 6 || age > 12) { displayRosterMessage('La edad debe ser un número entre 6 y 12.', 'error'); return; }
+            if (isNaN(dorsal) || dorsal < 0) { displayRosterMessage('El dorsal debe ser un número positivo.', 'error'); return; }
+            if (allPlayers.some(p => p.dorsal === dorsal)) { displayRosterMessage('Ya existe un jugador con este dorsal.', 'error'); return; }
+            
+            if (isNaN(bote) || bote < 0 || bote > 5 || isNaN(lectura) || lectura < 0 || lectura > 5 ||
+                isNaN(pase) || pase < 0 || pase > 5 || isNaN(defensaInd) || defensaInd < 0 || defensaInd > 5 ||
+                isNaN(tacticaDef) || tacticaDef < 0 || tacticaDef > 5) {
+                displayRosterMessage('Todas las habilidades deben ser un número entre 0 y 5.', 'error'); return;
+            }
+
+            allPlayers.push({ 
+                name, age, dorsal, 
+                skills: { bote, lectura, pase, defensaInd, tacticaDef } 
+            });
+            renderPlayersInRosterTable();
+            displayRosterMessage('Jugador añadido con éxito.', 'info');
+
+            playerNameInput.value = ''; playerAgeInput.value = ''; playerDorsalInput.value = '';
+            skillBoteInput.value = 3; skillLecturaInput.value = 3; skillPaseInput.value = 3;
+            skillDefensaIndInput.value = 3; skillTactDefInput.value = 3;
+
+            playerNameInput.focus(); 
+            document.getElementById('addPlayerMessage').scrollIntoView({ behavior: 'smooth', block: 'center' }); 
+        });
+
+        // --- Funciones de Edición Separada ---
+        function editPlayerData(index) {
+            editingPlayerIndex = index; 
+            const player = allPlayers[index];
+            
+            editingPlayerNameDataSpan.textContent = player.name;
+            editingPlayerDorsalDataSpan.textContent = player.dorsal;
+            playerNameEdit.value = player.name;
+            playerAgeEdit.value = player.age;
+            playerDorsalEdit.value = player.dorsal;
+
+            editDataSection.style.display = 'block'; 
+            playerNameEdit.focus(); 
+            editDataSection.scrollIntoView({ behavior: 'smooth', block: 'center' }); 
+            displayDataMessage(''); 
+        }
+
+        editDataSaveBtn.addEventListener('click', () => {
+            const player = allPlayers[editingPlayerIndex];
+            
+            const newName = playerNameEdit.value.trim();
+            const newAge = parseInt(playerAgeEdit.value);
+            const newDorsal = parseInt(playerDorsalEdit.value);
+
+            if (!newName) { displayDataMessage('El nombre no puede estar vacío.', 'error'); return; }
+            if (isNaN(newAge) || newAge < 6 || newAge > 12) { displayDataMessage('La edad debe ser un número entre 6 y 12.', 'error'); return; }
+            if (isNaN(newDorsal) || newDorsal < 0) { displayDataMessage('El dorsal debe ser un número positivo.', 'error'); return; }
+            if (allPlayers.some((p, i) => i !== editingPlayerIndex && p.dorsal === newDorsal)) { 
+                displayDataMessage('Ya existe otro jugador con este dorsal.', 'error'); return; 
+            }
+            
+            player.name = newName;
+            player.age = newAge; 
+            player.dorsal = newDorsal; 
+            
+            renderPlayersInRosterTable();
+            displayDataMessage('Datos básicos del jugador editados con éxito.', 'info');
+            setTimeout(() => { editDataSection.style.display = 'none'; }, 1500);
+        });
+
+        editDataCancelBtn.addEventListener('click', () => {
+            editDataSection.style.display = 'none'; 
+        });
+
+        function displayDataMessage(msg, type) {
+            editDataMessage.textContent = msg;
+            editDataMessage.className = `message-area-roster ${type}-message`;
+            editDataMessage.style.display = 'block';
+            setTimeout(() => { editDataMessage.style.display = 'none'; }, 3000);
+        }
+
+
+        function editPlayerSkills(index) {
+            editingPlayerIndex = index; 
+            const player = allPlayers[index];
+            
+            editingPlayerNameSkillsSpan.textContent = player.name;
+            editingPlayerDorsalSkillsSpan.textContent = player.dorsal;
+
+            skillBoteEdit.value = player.skills.bote;
+            skillLecturaEdit.value = player.skills.lectura;
+            skillPaseEdit.value = player.skills.pase;
+            skillDefensaIndEdit.value = player.skills.defensaInd;
+            skillTactDefEdit.value = player.skills.tacticaDef;
+
+            editSkillsSection.style.display = 'block'; 
+            skillBoteEdit.focus(); 
+            editSkillsSection.scrollIntoView({ behavior: 'smooth', block: 'center' }); 
+            displaySkillsMessage(''); 
+        }
+
+        editSkillsSaveBtn.addEventListener('click', () => {
+            const player = allPlayers[editingPlayerIndex];
+            
+            const newBote = parseInt(skillBoteEdit.value);
+            const newLectura = parseInt(skillLecturaEdit.value);
+            const newPase = parseInt(skillPaseEdit.value);
+            const newDefensaInd = parseInt(skillDefensaIndEdit.value);
+            const newTactDef = parseInt(skillTactDefEdit.value);
+
+            if (isNaN(newBote) || newBote < 0 || newBote > 5 ||
+                isNaN(newLectura) || newLectura < 0 || newLectura > 5 ||
+                isNaN(newPase) || newPase < 0 || newPase > 5 ||
+                isNaN(newDefensaInd) || newDefensaInd < 0 || newDefensaInd > 5 ||
+                isNaN(newTactDef) || newTactDef < 0 || newTactDef > 5) {
+                displaySkillsMessage('Todas las habilidades deben ser un número entre 0 y 5.', 'error');
+                return;
+            }
+
+            player.skills.bote = newBote;
+            player.skills.lectura = newLectura;
+            player.skills.pase = newPase;
+            player.skills.defensaInd = newDefensaInd;
+            player.skills.tacticaDef = newTactDef;
+
+            renderPlayersInRosterTable(); 
+            displaySkillsMessage('Habilidades actualizadas con éxito.', 'info');
+            setTimeout(() => { editSkillsSection.style.display = 'none'; }, 1500);
+        });
+
+        editSkillsCancelBtn.addEventListener('click', () => {
+            editSkillsSection.style.display = 'none'; 
+        });
+
+        function displaySkillsMessage(msg, type) {
+            editSkillsMessage.textContent = msg;
+            editSkillsMessage.className = `message-area-roster ${type}-message`;
+            editSkillsMessage.style.display = 'block';
+            setTimeout(() => { editSkillsMessage.style.display = 'none'; }, 3000);
+        }
+        // --- Fin Funciones de Edición Separada ---
+
+
+        function deletePlayer(index) {
+            if (confirm('¿Estás seguro de que quieres eliminar a este jugador?')) {
+                allPlayers.splice(index, 1);
+                renderPlayersInRosterTable();
+                displayRosterMessage('Jugador eliminado.', 'info');
+            }
+        }
+
+        playerNameInput.addEventListener('keydown', (e) => { if (e.key === 'Enter') { e.preventDefault(); playerAgeInput.focus(); } });
+        playerAgeInput.addEventListener('keydown', (e) => { if (e.key === 'Enter') { e.preventDefault(); playerDorsalInput.focus(); } });
+        playerDorsalInput.addEventListener('keydown', (e) => { if (e.key === 'Enter') { e.preventDefault(); skillBoteInput.focus(); } });
+        skillBoteInput.addEventListener('keydown', (e) => { if (e.key === 'Enter') { e.preventDefault(); skillLecturaInput.focus(); } });
+        skillLecturaInput.addEventListener('keydown', (e) => { if (e.key === 'Enter') { e.preventDefault(); skillPaseInput.focus(); } });
+        skillPaseInput.addEventListener('keydown', (e) => { if (e.key === 'Enter') { e.preventDefault(); skillDefensaIndInput.focus(); } });
+        skillDefensaIndInput.addEventListener('keydown', (e) => { if (e.key === 'Enter') { e.preventDefault(); skillTactDefInput.focus(); } });
+        skillTactDefInput.addEventListener('keydown', (e) => { if (e.key === 'Enter') { e.preventDefault(); addPlayerBtn.click(); } });
+
+
+        function displayRosterMessage(msg, type) {
+            addPlayerMessage.textContent = msg;
+            addPlayerMessage.className = `message-area-roster ${type}-message`;
+            addPlayerMessage.style.display = 'block';
+            setTimeout(() => { addPlayerMessage.style.display = 'none'; }, 3000);
+        }
+        
+    </script>
+</body>
+</html>
