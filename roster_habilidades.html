@@ -441,8 +441,8 @@
         // --- Variables y Constantes Globales ---
         const teamNameInput = document.getElementById('teamNameInput');
         const coachNameInput = document.getElementById('coachNameInput');
-        const teamRosterTitle = document.getElementById('teamRosterTitle'); 
-        const mainTitle = document.getElementById('mainTitle'); 
+        const teamRosterTitle = document.getElementById('teamRosterTitle');
+        const mainTitle = document.getElementById('mainTitle');
 
         // Add Player form elements
         const playerNameInput = document.getElementById('playerName');
@@ -454,7 +454,7 @@
         const skillDefensaIndInput = document.getElementById('skillDefensaInd');
         const skillTactDefInput = document.getElementById('skillTactDef');
         const addPlayerBtn = document.getElementById('addPlayerBtn');
-        const addPlayerMessage = document.getElementById('addPlayerMessage'); 
+        const addPlayerMessage = document.getElementById('addPlayerMessage');
 
         // Edit Player Data form elements
         const editDataSection = document.getElementById('editDataSection');
@@ -465,7 +465,7 @@
         const playerDorsalEdit = document.getElementById('playerDorsalEdit');
         const editDataSaveBtn = document.getElementById('editDataSaveBtn');
         const editDataCancelBtn = document.getElementById('editDataCancelBtn');
-        const editDataMessage = document.getElementById('editDataMessage'); 
+        const editDataMessage = document.getElementById('editDataMessage');
 
         // Edit Player Skills form elements
         const editSkillsSection = document.getElementById('editSkillsSection');
@@ -478,22 +478,23 @@
         const skillTactDefEdit = document.getElementById('skillTactDefEdit');
         const editSkillsSaveBtn = document.getElementById('editSkillsSaveBtn');
         const editSkillsCancelBtn = document.getElementById('editSkillsCancelBtn');
-        const editSkillsMessage = document.getElementById('editSkillsMessage'); 
-        let editingPlayerIndex = -1; 
+        const editSkillsMessage = document.getElementById('editSkillsMessage');
+        let editingPlayerIndex = -1;
 
 
         const playersTableBody = document.getElementById('playersTableBody');
         const playerCountSpan = document.getElementById('playerCount');
 
-        let allPlayers = []; 
+        let allPlayers = [];
 
         // --- Funciones Comunes e Inicialización ---
-        document.addEventListener('DOMContentLoaded', () => {
-            loadAllData();
-            renderPlayersInRosterTable(); 
+        document.addEventListener('DOMContentLoaded', async () => {
+            await loadAllData(); // Hacemos la carga asíncrona
+            renderPlayersInRosterTable();
         });
 
-        function loadAllData() {
+        // MODIFICADO: Ahora es una función asíncrona para usar fetch
+        async function loadAllData() {
             try {
                 const savedTeamName = localStorage.getItem('teamName');
                 const savedCoachName = localStorage.getItem('coachName');
@@ -506,21 +507,36 @@
                 if (savedCoachName) {
                     coachNameInput.value = savedCoachName;
                 }
-                if (savedPlayers) {
+
+                // Si hay jugadores en localStorage, los usamos.
+                if (savedPlayers && JSON.parse(savedPlayers).length > 0) {
+                    console.log("Cargando jugadores desde localStorage.");
                     allPlayers = JSON.parse(savedPlayers);
-                    allPlayers.forEach(player => {
-                        if (!player.skills) { 
-                            player.skills = { bote: 3, lectura: 3, pase: 3, defensaInd: 3, tacticaDef: 3 };
-                        }
-                    });
                 } else {
-                    allPlayers = []; 
+                    // Si no, los cargamos desde el fichero players.json
+                    console.log("localStorage vacío. Cargando jugadores desde players.json...");
+                    const response = await fetch('players.json');
+                    if (!response.ok) {
+                        throw new Error(`Error al cargar players.json: ${response.statusText}`);
+                    }
+                    const playersFromFile = await response.json();
+                    allPlayers = playersFromFile;
+                    // Y los guardamos en localStorage para la próxima vez
+                    localStorage.setItem('players', JSON.stringify(allPlayers));
+                    console.log("Jugadores cargados desde el fichero y guardados en localStorage.");
                 }
+
+                // Aseguramos que todos los jugadores tengan el objeto de habilidades
+                allPlayers.forEach(player => {
+                    if (!player.skills) {
+                        player.skills = { bote: 3, lectura: 3, pase: 3, defensaInd: 3, tacticaDef: 3 };
+                    }
+                });
             } catch (e) {
-                console.error("Error al cargar datos del localStorage:", e);
+                console.error("Error crítico al cargar datos:", e);
+                alert('Error al cargar datos del equipo. El almacenamiento podría haber sido limpiado. Por favor, revisa la consola para más detalles.');
                 localStorage.clear();
                 allPlayers = [];
-                alert('Error al cargar datos del equipo. El almacenamiento ha sido limpiado. Por favor, vuelve a añadir jugadores.');
             }
         }
 
@@ -530,7 +546,7 @@
             localStorage.setItem('players', JSON.stringify(allPlayers));
         }
 
-        // --- Gestión de Roster (Integrada) ---
+        // --- Gestión de Roster (El resto de funciones no cambian) ---
         teamNameInput.addEventListener('input', () => {
             teamRosterTitle.textContent = `Roster: ${teamNameInput.value}`;
             saveAllData();
@@ -542,8 +558,9 @@
 
         function renderPlayersInRosterTable() {
             playersTableBody.innerHTML = '';
-            allPlayers.forEach((player, index) => {
+            allPlayers.sort((a, b) => a.dorsal - b.dorsal).forEach((player, index) => {
                 const row = playersTableBody.insertRow();
+                const playerIndex = allPlayers.findIndex(p => p.dorsal === player.dorsal); // Busca el índice real
                 row.innerHTML = `
                     <td data-label="Dorsal">${player.dorsal}</td>
                     <td data-label="Nombre">${player.name}</td>
@@ -554,14 +571,14 @@
                     <td data-label="Def. Ind." class="skill-data">${player.skills.defensaInd}</td>
                     <td data-label="Tác. Def." class="skill-data">${player.skills.tacticaDef}</td>
                     <td data-label="Acciones" class="actions">
-                        <button onclick="editPlayerData(${index})">Editar Datos</button>
-                        <button onclick="editPlayerSkills(${index})">Editar Habilidades</button>
-                        <button class="delete" onclick="deletePlayer(${index})">Eliminar</button>
+                        <button onclick="editPlayerData(${playerIndex})">Editar Datos</button>
+                        <button onclick="editPlayerSkills(${playerIndex})">Editar Habilidades</button>
+                        <button class="delete" onclick="deletePlayer(${playerIndex})">Eliminar</button>
                     </td>
                 `;
             });
             playerCountSpan.textContent = allPlayers.length;
-            saveAllData(); 
+            saveAllData();
         }
 
         addPlayerBtn.addEventListener('click', () => {
@@ -574,21 +591,20 @@
             const defensaInd = parseInt(skillDefensaIndInput.value);
             const tacticaDef = parseInt(skillTactDefInput.value);
 
-
             if (!name) { displayRosterMessage('El nombre no puede estar vacío.', 'error'); return; }
             if (isNaN(age) || age < 6 || age > 12) { displayRosterMessage('La edad debe ser un número entre 6 y 12.', 'error'); return; }
             if (isNaN(dorsal) || dorsal < 0) { displayRosterMessage('El dorsal debe ser un número positivo.', 'error'); return; }
             if (allPlayers.some(p => p.dorsal === dorsal)) { displayRosterMessage('Ya existe un jugador con este dorsal.', 'error'); return; }
-            
+
             if (isNaN(bote) || bote < 0 || bote > 5 || isNaN(lectura) || lectura < 0 || lectura > 5 ||
                 isNaN(pase) || pase < 0 || pase > 5 || isNaN(defensaInd) || defensaInd < 0 || defensaInd > 5 ||
                 isNaN(tacticaDef) || tacticaDef < 0 || tacticaDef > 5) {
                 displayRosterMessage('Todas las habilidades deben ser un número entre 0 y 5.', 'error'); return;
             }
 
-            allPlayers.push({ 
-                name, age, dorsal, 
-                skills: { bote, lectura, pase, defensaInd, tacticaDef } 
+            allPlayers.push({
+                name, age, dorsal,
+                skills: { bote, lectura, pase, defensaInd, tacticaDef }
             });
             renderPlayersInRosterTable();
             displayRosterMessage('Jugador añadido con éxito.', 'info');
@@ -597,30 +613,30 @@
             skillBoteInput.value = 3; skillLecturaInput.value = 3; skillPaseInput.value = 3;
             skillDefensaIndInput.value = 3; skillTactDefInput.value = 3;
 
-            playerNameInput.focus(); 
-            document.getElementById('addPlayerMessage').scrollIntoView({ behavior: 'smooth', block: 'center' }); 
+            playerNameInput.focus();
+            document.getElementById('addPlayerMessage').scrollIntoView({ behavior: 'smooth', block: 'center' });
         });
 
         // --- Funciones de Edición Separada ---
         function editPlayerData(index) {
-            editingPlayerIndex = index; 
+            editingPlayerIndex = index;
             const player = allPlayers[index];
-            
+
             editingPlayerNameDataSpan.textContent = player.name;
             editingPlayerDorsalDataSpan.textContent = player.dorsal;
             playerNameEdit.value = player.name;
             playerAgeEdit.value = player.age;
             playerDorsalEdit.value = player.dorsal;
 
-            editDataSection.style.display = 'block'; 
-            playerNameEdit.focus(); 
-            editDataSection.scrollIntoView({ behavior: 'smooth', block: 'center' }); 
-            displayDataMessage(''); 
+            editDataSection.style.display = 'block';
+            playerNameEdit.focus();
+            editDataSection.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            displayDataMessage('');
         }
 
         editDataSaveBtn.addEventListener('click', () => {
             const player = allPlayers[editingPlayerIndex];
-            
+
             const newName = playerNameEdit.value.trim();
             const newAge = parseInt(playerAgeEdit.value);
             const newDorsal = parseInt(playerDorsalEdit.value);
@@ -628,21 +644,21 @@
             if (!newName) { displayDataMessage('El nombre no puede estar vacío.', 'error'); return; }
             if (isNaN(newAge) || newAge < 6 || newAge > 12) { displayDataMessage('La edad debe ser un número entre 6 y 12.', 'error'); return; }
             if (isNaN(newDorsal) || newDorsal < 0) { displayDataMessage('El dorsal debe ser un número positivo.', 'error'); return; }
-            if (allPlayers.some((p, i) => i !== editingPlayerIndex && p.dorsal === newDorsal)) { 
-                displayDataMessage('Ya existe otro jugador con este dorsal.', 'error'); return; 
+            if (allPlayers.some((p, i) => i !== editingPlayerIndex && p.dorsal === newDorsal)) {
+                displayDataMessage('Ya existe otro jugador con este dorsal.', 'error'); return;
             }
-            
+
             player.name = newName;
-            player.age = newAge; 
-            player.dorsal = newDorsal; 
-            
+            player.age = newAge;
+            player.dorsal = newDorsal;
+
             renderPlayersInRosterTable();
             displayDataMessage('Datos básicos del jugador editados con éxito.', 'info');
             setTimeout(() => { editDataSection.style.display = 'none'; }, 1500);
         });
 
         editDataCancelBtn.addEventListener('click', () => {
-            editDataSection.style.display = 'none'; 
+            editDataSection.style.display = 'none';
         });
 
         function displayDataMessage(msg, type) {
@@ -652,11 +668,10 @@
             setTimeout(() => { editDataMessage.style.display = 'none'; }, 3000);
         }
 
-
         function editPlayerSkills(index) {
-            editingPlayerIndex = index; 
+            editingPlayerIndex = index;
             const player = allPlayers[index];
-            
+
             editingPlayerNameSkillsSpan.textContent = player.name;
             editingPlayerDorsalSkillsSpan.textContent = player.dorsal;
 
@@ -666,15 +681,15 @@
             skillDefensaIndEdit.value = player.skills.defensaInd;
             skillTactDefEdit.value = player.skills.tacticaDef;
 
-            editSkillsSection.style.display = 'block'; 
-            skillBoteEdit.focus(); 
-            editSkillsSection.scrollIntoView({ behavior: 'smooth', block: 'center' }); 
-            displaySkillsMessage(''); 
+            editSkillsSection.style.display = 'block';
+            skillBoteEdit.focus();
+            editSkillsSection.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            displaySkillsMessage('');
         }
 
         editSkillsSaveBtn.addEventListener('click', () => {
             const player = allPlayers[editingPlayerIndex];
-            
+
             const newBote = parseInt(skillBoteEdit.value);
             const newLectura = parseInt(skillLecturaEdit.value);
             const newPase = parseInt(skillPaseEdit.value);
@@ -696,13 +711,13 @@
             player.skills.defensaInd = newDefensaInd;
             player.skills.tacticaDef = newTactDef;
 
-            renderPlayersInRosterTable(); 
+            renderPlayersInRosterTable();
             displaySkillsMessage('Habilidades actualizadas con éxito.', 'info');
             setTimeout(() => { editSkillsSection.style.display = 'none'; }, 1500);
         });
 
         editSkillsCancelBtn.addEventListener('click', () => {
-            editSkillsSection.style.display = 'none'; 
+            editSkillsSection.style.display = 'none';
         });
 
         function displaySkillsMessage(msg, type) {
@@ -711,8 +726,6 @@
             editSkillsMessage.style.display = 'block';
             setTimeout(() => { editSkillsMessage.style.display = 'none'; }, 3000);
         }
-        // --- Fin Funciones de Edición Separada ---
-
 
         function deletePlayer(index) {
             if (confirm('¿Estás seguro de que quieres eliminar a este jugador?')) {
@@ -731,14 +744,13 @@
         skillDefensaIndInput.addEventListener('keydown', (e) => { if (e.key === 'Enter') { e.preventDefault(); skillTactDefInput.focus(); } });
         skillTactDefInput.addEventListener('keydown', (e) => { if (e.key === 'Enter') { e.preventDefault(); addPlayerBtn.click(); } });
 
-
         function displayRosterMessage(msg, type) {
             addPlayerMessage.textContent = msg;
             addPlayerMessage.className = `message-area-roster ${type}-message`;
             addPlayerMessage.style.display = 'block';
             setTimeout(() => { addPlayerMessage.style.display = 'none'; }, 3000);
         }
-        
+
     </script>
 </body>
 </html>
